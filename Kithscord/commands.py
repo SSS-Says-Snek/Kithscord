@@ -10,6 +10,7 @@ import util
 async def handle(cmd_str: str, invoker_msg: discord.Message, response_msg: discord.Message):
     args = cmd_str.split()
     arg_length = len(args) - 1
+    log_msg = f"Command invoked by {invoker_msg.author} ({invoker_msg.author.id}): {cmd_str}"
 
     is_admin = False
     for role in invoker_msg.author.roles:
@@ -27,6 +28,7 @@ async def handle(cmd_str: str, invoker_msg: discord.Message, response_msg: disco
 
             if leng != -2:
                 await overloads[leng](args[1:], invoker_msg, response_msg)
+                await util.log(log_msg)
                 return
         if args[0] in user_cmds:
             overloads = user_cmds[args[0]]
@@ -34,6 +36,8 @@ async def handle(cmd_str: str, invoker_msg: discord.Message, response_msg: disco
 
             if leng != -2:
                 await overloads[leng](args[1:], invoker_msg, response_msg)
+                await util.log(log_msg)
+                return
             else:
                 await util.edit_embed(
                     response_msg,
