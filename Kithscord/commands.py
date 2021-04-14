@@ -21,23 +21,20 @@ async def handle(cmd_str: str, invoker_msg: discord.Message, response_msg: disco
         return
 
     try:
-        if is_admin and args[0] in admin_cmds.keys():
+        if is_admin and args[0] in admin_cmds:
             overloads = admin_cmds[args[0]]
+            leng = -1 if -1 in overloads else arg_length if arg_length in overloads else -2
 
-            if arg_length in overloads.keys():
-                await overloads[arg_length](args[1:], invoker_msg, response_msg)
-                return
-            elif -1 in overloads.keys():
-                await overloads[-1](args[1:], invoker_msg, response_msg)
+            if leng != -2:
+                await overloads[leng](args[1:], invoker_msg, response_msg)
                 return
 
-        if args[0] in user_cmds.keys():
+        if args[0] in user_cmds:
             overloads = user_cmds[args[0]]
+            leng = -1 if -1 in overloads else arg_length if arg_length in overloads else -2
 
-            if arg_length in overloads.keys():
-                await overloads[arg_length](args[1:], invoker_msg, response_msg)
-            elif -1 in overloads.keys():
-                await overloads[-1](args[1:], invoker_msg, response_msg)
+            if leng != -2:
+                await overloads[leng](args[1:], invoker_msg, response_msg)
             else:
                 await util.edit_embed(response_msg, "Incorrect amount of argument(s)!", "")
 
