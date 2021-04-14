@@ -55,3 +55,13 @@ async def send_embed(
         title, description, color,
         url_image, url_thumbnail, fields
     ))
+
+
+def code_block(string: str, max_characters=2048):
+    string = string.replace("```", "\u200b`\u200b`\u200b`\u200b")
+    max_characters -= 7
+
+    if len(string) > max_characters:
+        return f"```\n{string[:max_characters - 7]} ...```"
+    else:
+        return f"```\n{string[:max_characters]}```"

@@ -5,5 +5,5 @@ import util
 
 
 @export(-1, True)
-async def cool(args, msg: discord.Message, response: discord.Message):
-    await util.edit_embed(response, "bruh", "bruh")
+async def error(args, msg: discord.Message, response: discord.Message):
+    raise Exception("bruh", "bruh")

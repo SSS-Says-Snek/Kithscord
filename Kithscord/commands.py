@@ -28,7 +28,6 @@ async def handle(cmd_str: str, invoker_msg: discord.Message, response_msg: disco
             if leng != -2:
                 await overloads[leng](args[1:], invoker_msg, response_msg)
                 return
-
         if args[0] in user_cmds:
             overloads = user_cmds[args[0]]
             leng = -1 if -1 in overloads else arg_length if arg_length in overloads else -2
@@ -36,10 +35,24 @@ async def handle(cmd_str: str, invoker_msg: discord.Message, response_msg: disco
             if leng != -2:
                 await overloads[leng](args[1:], invoker_msg, response_msg)
             else:
-                await util.edit_embed(response_msg, "Incorrect amount of argument(s)!", "")
-
+                await util.edit_embed(
+                    response_msg,
+                    "Incorrect amount of argument(s)!",
+                    "",
+                    0xFF0000
+                )
         else:
-            await util.edit_embed(response_msg, "Unknown command!", "")
+            await util.edit_embed(
+                response_msg,
+                "Unrecognized command!",
+                "",
+                0xFF0000
+            )
 
     except Exception as exc:
-        raise exc
+        await util.edit_embed(
+            response_msg,
+            "An exception occured while handling the command!",
+            util.code_block(f"{type(exc).__name__}: {', '.join(map(str, exc.args))}"),
+            0xFF0000
+        )
