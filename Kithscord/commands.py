@@ -26,10 +26,12 @@ async def handle(cmd_str: str, invoker_msg: discord.Message, response_msg: disco
 
             if arg_length in overloads.keys():
                 await overloads[arg_length](args[1:], invoker_msg, response_msg)
+                return
             elif -1 in overloads.keys():
                 await overloads[-1](args[1:], invoker_msg, response_msg)
+                return
 
-        elif args[0] in user_cmds.keys():
+        if args[0] in user_cmds.keys():
             overloads = user_cmds[args[0]]
 
             if arg_length in overloads.keys():
