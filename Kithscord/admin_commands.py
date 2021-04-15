@@ -14,7 +14,7 @@ class AdminCommand(UserCommand):
         """
         Temporary
         """
-        raise Exception("bruh", "bruh")
+        raise ValueError("Bruh")
 
     async def cmd_sudo(self):
         """

@@ -1,2 +1,2 @@
 # Kithscord
- The discord bot of the Kithare's discord server.
+ The discord bot of Kithare's official discord server.

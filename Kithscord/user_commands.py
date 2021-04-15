@@ -1,5 +1,7 @@
 import discord
 
+import traceback
+
 import util
 import common
 
@@ -52,10 +54,15 @@ class UserCommand:
                 msg = ""
 
             else:
+                # redacted_path = None TODO: Figure out heroku path
+                error_tuple = (type(exc), exc, exc.__traceback__)
+                formatted_exception = util.discordify(''.join(traceback.format_exception(*error_tuple)).strip())
+                # .replace(redacted_path, '...')
                 title = "An exception occured while handling the command!"
-                msg = util.code_block(
-                    f"{type(exc).__name__}: {', '.join(map(str, exc.args))}"
-                )
+                # msg = util.code_block(
+                #     f"{type(exc).__name__}: {', '.join(map(str, exc.args))}"
+                # )
+                msg = f"An exception occured! Here's the traceback:\n\n{formatted_exception}"
 
             await util.edit_embed(resp_msg, title, msg, 0xFF0000)
 
@@ -76,4 +83,5 @@ class UserCommand:
 
     async def cmd_version(self):
         self.check_args(0)
-        await util.edit_embed(self.response, "Version", "69.69")
+        await util.edit_embed(self.response, "Version", "Kithare Version: 0.0.0\n"
+                                                        "Kithscord Version: 69.69")
