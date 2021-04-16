@@ -1,13 +1,8 @@
-import discord
 import os
 
-import common
-import util
-import user_commands
-import admin_commands
+import discord
 
-admin = admin_commands.AdminCommand()
-user = user_commands.UserCommand()
+from kithscord import admin_commands, common, user_commands, util
 
 
 @common.bot.event
@@ -15,7 +10,7 @@ async def on_ready():
     """
     The initial start when Kithscord gets booted.
     """
-    await util.log("Kithscord ready!")
+    util.log("Kithscord ready!")
 
 
 @common.bot.event
@@ -27,10 +22,10 @@ async def on_message(msg: discord.Message):
         return
 
     if msg.content.startswith(common.PREFIX):
-        cmd = user
+        cmd = user_commands.UserCommand()
         for role in msg.author.roles:
             if role.id in common.ADMIN_ROLES:
-                cmd = admin
+                cmd = admin_commands.AdminCommand()
                 break
 
         response = await util.send_embed(

@@ -1,9 +1,10 @@
-import discord
-
+import os
 import traceback
 
-import util
-import common
+import discord
+
+import kithscord.common
+import kithscord.util
 
 
 class ArgError(Exception):
@@ -25,7 +26,8 @@ class UserCommand:
             if i.startswith("cmd_"):
                 self.cmds_and_funcs[i[len("cmd_"):]] = self.__getattribute__(i)
 
-        # Avoid PyCharm shouting that member variables can't be declared outside __init__
+        # Avoid PyCharm shouting that member variables can't be declared
+        # outside __init__
         self.invoke_msg = None
         self.response = None
         self.args = None
@@ -41,14 +43,17 @@ class UserCommand:
         self.invoke_msg = invoke_msg
         self.response = resp_msg
 
-        cmd_str = invoke_msg.content[len(common.PREFIX):].strip()
+        cmd_str = invoke_msg.content[len(kithscord.common.PREFIX):].strip()
         self.args = cmd_str.split()
         cmd = self.args.pop(0)
         self.string = cmd_str[len(cmd):].strip()
 
+        kithscord.util.log(
+            f"Command invoked by {invoke_msg.author}: {cmd_str}"
+        )
+
         try:
             await self.cmds_and_funcs[cmd]()
-            await util.log(f"Command invoked by {invoke_msg.author}: {cmd_str}")
 
         except Exception as exc:
             if isinstance(exc, ArgError):
@@ -60,12 +65,13 @@ class UserCommand:
                 msg = ""
 
             else:
-                # redacted_path = None TODO: Figure out heroku path
                 error_tuple = (type(exc), exc, exc.__traceback__)
                 title = "An exception occured while handling the command!"
-                msg = util.code_block(''.join(traceback.format_exception(*error_tuple)).strip())
+                msg = kithscord.util.code_block(
+                    ''.join(traceback.format_exception(*error_tuple)).strip()
+                )
 
-            await util.edit_embed(resp_msg, title, msg, 0xFF0000)
+            await kithscord.util.edit_embed(resp_msg, title, msg, 0xFF0000)
 
     def check_args(self, minarg, maxarg=None):
         """
@@ -83,6 +89,32 @@ class UserCommand:
             )
 
     async def cmd_version(self):
+        """
+        Implement kh!version, for check version
+        """
         self.check_args(0)
-        await util.edit_embed(self.response, "Version", "Kithare Version: 0.0.0\n"
-                                                        "Kithscord Version: 69.69")
+        await kithscord.util.edit_embed(
+            self.response,
+            "Version",
+            kithscord.util.run_kcr('-v')
+            + f"Kithscord Version {kithscord.common.VERSION}"
+        )
+
+    async def cmd_lex(self):
+        """
+        Implement kh!lex, to lex kithare source
+        """
+        code = self.string.strip().strip('`')
+        with open("tempfile", "w") as f:
+            f.write(code)
+
+        try:
+            await kithscord.util.edit_embed(
+                self.response,
+                "Lexed Kithare output",
+                kithscord.util.code_block(
+                    kithscord.util.run_kcr("--lex", "tempfile")
+                )
+            )
+        finally:
+            os.remove("tempfile")

@@ -1,7 +1,0 @@
-import discord
-
-
-bot = discord.Client()
-
-ADMIN_ROLES = {819457027776446494, 810843243071143946, 830567257272877126}
-PREFIX = "kh!"
