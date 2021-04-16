@@ -6,7 +6,7 @@ import discord
 import kithscord.util
 from kithscord.user_commands import UserCommand
 
-ispulling = False
+is_pulling = False
 
 
 class AdminCommand(UserCommand):
@@ -43,12 +43,12 @@ class AdminCommand(UserCommand):
         """
         Implement kh!pull, to pull and build kithare
         """
-        global ispulling
+        global is_pulling
         self.check_args(0, 2)
         if not self.args:
             self.args.append("main")
 
-        if ispulling:
+        if is_pulling:
             await kithscord.util.edit_embed(
                 self.response,
                 "Pull and build failed",
@@ -57,12 +57,12 @@ class AdminCommand(UserCommand):
             )
             return
 
-        ispulling = True
+        is_pulling = True
         try:
             await kithscord.util.pull_kithare(
                 self.response, self.args[0], len(self.args) == 2
             )
         finally:
-            ispulling = False
+            is_pulling = False
             if os.path.isfile("kithare-buildlog.txt"):
                 os.remove("kithare-buildlog.txt")
