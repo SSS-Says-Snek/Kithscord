@@ -67,7 +67,7 @@ def code_block(string: str, max_characters=2048):
         return f"```\n{string[:max_characters]}```"
 
 
-def discordify(message: str):
+def escape(message: str):
     """Converts normal string into "discord" string that includes backspaces to cancel out unwanted changes"""
     if '\\' in message:
         message = message.replace('\\', r'\\')

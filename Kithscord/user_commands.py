@@ -25,6 +25,12 @@ class UserCommand:
             if i.startswith("cmd_"):
                 self.cmds_and_funcs[i[len("cmd_"):]] = self.__getattribute__(i)
 
+        # Avoid PyCharm shouting that member variables can't be declared outside __init__
+        self.invoke_msg = None
+        self.response = None
+        self.args = None
+        self.string = None
+
     async def handle_cmd(
         self, invoke_msg: discord.Message, resp_msg: discord.Message
     ):
@@ -56,13 +62,8 @@ class UserCommand:
             else:
                 # redacted_path = None TODO: Figure out heroku path
                 error_tuple = (type(exc), exc, exc.__traceback__)
-                formatted_exception = util.discordify(''.join(traceback.format_exception(*error_tuple)).strip())
-                # .replace(redacted_path, '...')
                 title = "An exception occured while handling the command!"
-                # msg = util.code_block(
-                #     f"{type(exc).__name__}: {', '.join(map(str, exc.args))}"
-                # )
-                msg = f"An exception occured! Here's the traceback:\n\n{formatted_exception}"
+                msg = util.code_block(''.join(traceback.format_exception(*error_tuple)).strip())
 
             await util.edit_embed(resp_msg, title, msg, 0xFF0000)
 
