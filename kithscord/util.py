@@ -1,6 +1,7 @@
 import asyncio
 import io
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -11,6 +12,24 @@ import aiohttp
 import discord
 
 import kithscord.common
+
+arch = platform.machine()
+compiler = "MinGW" if platform.system() == "Windows" else "GCC"
+
+if arch.endswith("86"):
+    arch = "x86"
+
+elif arch.lower() in ["x86_64", "amd64"]:
+    arch = "x64"
+
+elif arch.lower() in ["armv8l", "arm64", "aarch64"]:
+    arch = "ARM64"
+
+elif arch.lower().startswith("arm"):
+    arch = "ARM"
+
+elif not arch:
+    arch = "None"
 
 
 async def pull_kithare(response, branch):
@@ -79,8 +98,8 @@ def run_kcr(*args, timeout=5):
     """
     Run kcr command
     """
-    # We are assuming that this code in run on a linux machine
-    cmd = [os.path.join("kithare", "dist", "GCC-x64", "kcr")]
+    # We are assuming that this code in run on a linux/mac
+    cmd = [os.path.join("kithare", "dist", f"{compiler}-{arch}", "kcr")]
     cmd.extend(args)
 
     return subprocess.run(
