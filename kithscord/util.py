@@ -2,7 +2,7 @@ import asyncio
 import io
 import os
 import platform
-import shutil
+import stat
 import subprocess
 import sys
 import zipfile
@@ -30,88 +30,6 @@ elif arch.lower().startswith("arm"):
 
 elif not arch:
     arch = "None"
-
-
-async def pull_kithare(response, branch, uploadlog=False):
-    """
-    Pull and build Kithare from github
-    """
-    await kithscord.util.edit_embed(
-        response,
-        "Pulling and building Kithare",
-        "Please wait while Kithare is being built",
-        url_image="https://raw.githubusercontent.com/Kithare/"
-        + "Kithscord/main/assets/fidget-spinner.gif",
-    )
-
-    if os.path.isdir("kithare"):
-        shutil.rmtree("kithare")
-
-    link = f"https://github.com/Kithare/Kithare/archive/{branch}.zip"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(link) as linkobj:
-            resp = await linkobj.read()
-
-    with zipfile.ZipFile(io.BytesIO(resp), 'r') as zipped:
-        zipped.extractall()
-
-    os.rename(f"Kithare-{branch}", "kithare")
-    with open("kithare-buildlog.txt", "w") as f:
-        proc = await asyncio.create_subprocess_shell(
-            f"{sys.executable} {os.path.join('kithare', 'build.py')}",
-            stdout=f,
-            stderr=f,
-        )
-
-        for i in range(601):
-            if proc.returncode is not None:
-                break
-
-            if i == 600:
-                if proc.returncode is None:
-                    proc.kill()
-            await asyncio.sleep(1)
-
-        f.write(f"\nProcess exited with exitcode {proc.returncode}")
-
-    if proc.returncode:
-        uploadlog = True
-        await kithscord.util.edit_embed(
-            response,
-            "Pulling and building Kithare",
-            "Kithare Build Failed",
-            0xFF0000
-        )
-    else:
-        await kithscord.util.edit_embed(
-            response,
-            "Pulling and building Kithare",
-            "Kithare Build Suceeded",
-            0x00FF00
-        )
-
-    if uploadlog:
-        await response.reply(
-            "Here is the buildlog for that, if you are interested",
-            file=discord.File("kithare-buildlog.txt")
-        )
-
-
-def run_kcr(*args, timeout=5):
-    """
-    Run kcr command
-    """
-    # We are assuming that this code in run on a linux/mac
-    cmd = [os.path.join("kithare", "dist", f"{compiler}-{arch}", "kcr")]
-    cmd.extend(args)
-
-    return subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        timeout=timeout,
-        text=True,
-    ).stdout
 
 
 def log(msg: str):
@@ -195,3 +113,100 @@ def escape(message: str):
     if '_' in message:
         message = message.replace('_', r'\_')
     return message
+
+
+def rmtree(top):
+    """
+    Reimplementation of shutil.rmtree. The reason shutil.rmtree itself is not used,
+    is of a permission error in Windows while deleting the Kithare build folder.
+    """
+    for root, dirs, files in os.walk(top, topdown=False):
+        for name in files:
+            filename = os.path.join(root, name)
+            os.chmod(filename, stat.S_IWUSR)
+            os.remove(filename)
+        for name in dirs:
+            os.rmdir(os.path.join(root, name))
+    os.rmdir(top)
+
+
+async def pull_kithare(response, branch, uploadlog=False):
+    """
+    Pull and build Kithare from github
+    """
+    await kithscord.util.edit_embed(
+        response,
+        "Pulling and building Kithare",
+        "Please wait while Kithare is being built",
+        url_image="https://raw.githubusercontent.com/Kithare/"
+        + "Kithscord/main/assets/fidget-spinner.gif",
+    )
+
+    if os.path.isdir("kithare"):
+        rmtree("kithare")
+
+    link = f"https://github.com/Kithare/Kithare/archive/{branch}.zip"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(link) as linkobj:
+            resp = await linkobj.read()
+
+    with zipfile.ZipFile(io.BytesIO(resp), 'r') as zipped:
+        zipped.extractall()
+
+    os.rename(f"Kithare-{branch}", "kithare")
+    with open("kithare-buildlog.txt", "w") as f:
+        proc = await asyncio.create_subprocess_shell(
+            f"{sys.executable} {os.path.join('kithare', 'build.py')}",
+            stdout=f,
+            stderr=f,
+        )
+
+        for i in range(601):
+            if proc.returncode is not None:
+                break
+
+            if i == 600:
+                if proc.returncode is None:
+                    proc.kill()
+            await asyncio.sleep(1)
+
+        f.write(f"\nProcess exited with exitcode {proc.returncode}")
+
+    if proc.returncode:
+        uploadlog = True
+        await kithscord.util.edit_embed(
+            response,
+            "Pulling and building Kithare",
+            "Kithare Build Failed",
+            0xFF0000
+        )
+    else:
+        await kithscord.util.edit_embed(
+            response,
+            "Pulling and building Kithare",
+            "Kithare Build Suceeded",
+            0x00FF00
+        )
+
+    if uploadlog:
+        await response.reply(
+            "Here is the buildlog for that, if you are interested",
+            file=discord.File("kithare-buildlog.txt")
+        )
+
+
+def run_kcr(*args, timeout=5):
+    """
+    Run kcr command
+    """
+    # We are assuming that this code in run on a linux/mac
+    cmd = [os.path.join("kithare", "dist", f"{compiler}-{arch}", "kcr")]
+    cmd.extend(args)
+
+    return subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=timeout,
+        text=True,
+    ).stdout
