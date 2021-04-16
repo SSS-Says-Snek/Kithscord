@@ -44,7 +44,7 @@ class AdminCommand(UserCommand):
         Implement kh!pull, to pull and build kithare
         """
         global ispulling
-        self.check_args(0, 1)
+        self.check_args(0, 2)
         if not self.args:
             self.args.append("main")
 
@@ -59,7 +59,9 @@ class AdminCommand(UserCommand):
 
         ispulling = True
         try:
-            await kithscord.util.pull_kithare(self.response, self.args[0])
+            await kithscord.util.pull_kithare(
+                self.response, self.args[0], len(self.args) == 2
+            )
         finally:
             ispulling = False
             if os.path.isfile("kithare-buildlog.txt"):

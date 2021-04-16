@@ -32,7 +32,7 @@ elif not arch:
     arch = "None"
 
 
-async def pull_kithare(response, branch):
+async def pull_kithare(response, branch, uploadlog=False):
     """
     Pull and build Kithare from github
     """
@@ -75,15 +75,12 @@ async def pull_kithare(response, branch):
         f.write(f"\nProcess exited with exitcode {proc.returncode}")
 
     if proc.returncode:
+        uploadlog = True
         await kithscord.util.edit_embed(
             response,
             "Pulling and building Kithare",
             "Kithare Build Failed",
             0xFF0000
-        )
-        await response.reply(
-            "Here is the buildlog for that, if you are interested",
-            file=discord.File("kithare-buildlog.txt")
         )
     else:
         await kithscord.util.edit_embed(
@@ -91,6 +88,12 @@ async def pull_kithare(response, branch):
             "Pulling and building Kithare",
             "Kithare Build Suceeded",
             0x00FF00
+        )
+
+    if uploadlog:
+        await response.reply(
+            "Here is the buildlog for that, if you are interested",
+            file=discord.File("kithare-buildlog.txt")
         )
 
 
