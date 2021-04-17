@@ -32,6 +32,9 @@ elif not arch:
     arch = "None"
 
 
+is_pulling = False
+
+
 def log(msg: str):
     """
     Prints msg with the current time
@@ -101,7 +104,7 @@ def code_block(string: str, max_characters=2048):
 
 def escape(message: str):
     """
-    Converts normal string into "discord" string that includes backspaces 
+    Converts normal string into "discord" string that includes backspaces
     to cancel out unwanted changes
     """
     if '\\' in message:
@@ -130,76 +133,99 @@ def rmtree(top):
     os.rmdir(top)
 
 
-async def pull_kithare(response, branch, uploadlog=False):
+async def pull_kithare(branch="main", response=None, uploadlog=False):
     """
     Pull and build Kithare from github
     """
-    await kithscord.util.edit_embed(
-        response,
-        "Pulling and building Kithare",
-        "Please wait while Kithare is being built",
-        url_image="https://raw.githubusercontent.com/Kithare/"
-        + "Kithscord/main/assets/fidget-spinner.gif",
-    )
+    global is_pulling
+    if is_pulling:
+        if response is not None:
+            await edit_embed(
+                response,
+                "Pull and build failed",
+                "You cannot pull while another pull operation is running",
+                0xFF0000
+            )
+        return
 
-    if os.path.isdir("kithare"):
-        rmtree("kithare")
+    is_pulling = True
+    try:
+        if response is not None:
+            await edit_embed(
+                response,
+                "Pulling and building Kithare",
+                "Please wait while Kithare is being built",
+                url_thumbnail="https://raw.githubusercontent.com/Kithare/"
+                + "Kithscord/main/assets/fidget-spinner.gif",
+            )
 
-    link = f"https://github.com/Kithare/Kithare/archive/{branch}.zip"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(link) as linkobj:
-            resp = await linkobj.read()
+        if os.path.isdir("kithare"):
+            rmtree("kithare")
 
-    with zipfile.ZipFile(io.BytesIO(resp), 'r') as zipped:
-        zipped.extractall()
+        link = f"https://github.com/Kithare/Kithare/archive/{branch}.zip"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(link) as linkobj:
+                resp = await linkobj.read()
 
-    os.rename(f"Kithare-{branch}", "kithare")
-    with open("kithare-buildlog.txt", "w") as f:
-        proc = await asyncio.create_subprocess_shell(
-            f"{sys.executable} {os.path.join('kithare', 'build.py')}",
-            stdout=f,
-            stderr=f,
-        )
+        with zipfile.ZipFile(io.BytesIO(resp), 'r') as zipped:
+            zipped.extractall()
 
-        for i in range(601):
-            if proc.returncode is not None:
-                break
+        os.rename(f"Kithare-{branch}", "kithare")
+        with open("kithare-buildlog.txt", "w") as f:
+            proc = await asyncio.create_subprocess_shell(
+                f"\"{sys.executable}\" {os.path.join('kithare', 'build.py')}",
+                stdout=f,
+                stderr=f,
+            )
 
-            if i == 600:
-                if proc.returncode is None:
-                    proc.kill()
-            await asyncio.sleep(1)
+            for i in range(601):
+                if proc.returncode is not None:
+                    break
 
-        f.write(f"\nProcess exited with exitcode {proc.returncode}")
+                if i == 600:
+                    if proc.returncode is None:
+                        proc.kill()
+                await asyncio.sleep(1)
 
-    if proc.returncode:
-        uploadlog = True
-        await kithscord.util.edit_embed(
-            response,
-            "Pulling and building Kithare",
-            "Kithare Build Failed",
-            0xFF0000
-        )
-    else:
-        await kithscord.util.edit_embed(
-            response,
-            "Pulling and building Kithare",
-            "Kithare Build Suceeded",
-            0x00FF00
-        )
+            f.write(f"\nProcess exited with exitcode {proc.returncode}")
 
-    if uploadlog:
-        await response.reply(
-            "Here is the buildlog for that, if you are interested",
-            file=discord.File("kithare-buildlog.txt")
-        )
+        if response is not None:
+            if proc.returncode:
+                uploadlog = True
+                await edit_embed(
+                    response,
+                    "Pulling and building Kithare",
+                    "Kithare Build Failed",
+                    0xFF0000
+                )
+            else:
+                await edit_embed(
+                    response,
+                    "Pulling and building Kithare",
+                    "Kithare Build Suceeded",
+                    0x00FF00
+                )
+
+            if uploadlog:
+                await response.reply(
+                    "Here is the buildlog for that, if you are interested",
+                    file=discord.File("kithare-buildlog.txt")
+                )
+    finally:
+        is_pulling = False
+        if os.path.isfile("kithare-buildlog.txt"):
+            os.remove("kithare-buildlog.txt")
 
 
 def run_kcr(*args, timeout=5):
     """
     Run kcr command
     """
-    # We are assuming that this code in run on a linux/mac
+    if is_pulling:
+        return "ERROR: \n" + \
+            "Kithare command cannot run while Kithare is being built\n" + \
+            "Please wait for a bit, and then try to re-run"
+
     cmd = [os.path.join("kithare", "dist", f"{compiler}-{arch}", "kcr")]
     cmd.extend(args)
 

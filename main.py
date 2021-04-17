@@ -12,6 +12,11 @@ async def on_ready():
     """
     util.log("Kithscord ready!")
 
+    if not os.path.isdir("kithare"):
+        print("Kithare installation not detected, installing kithare")
+        await util.pull_kithare()
+        print("Finished installing Kithare")
+
 
 @common.bot.event
 async def on_message(msg: discord.Message):
