@@ -11,8 +11,6 @@ from datetime import datetime
 import aiohttp
 import discord
 
-import kithscord.common
-
 arch = platform.machine()
 compiler = "MinGW" if platform.system() == "Windows" else "GCC"
 
@@ -83,10 +81,11 @@ async def send_embed(
     """
     Sends an embed with a much more tight function
     """
-    return await channel.send(embed=await construct_embed(
+    embed = await construct_embed(
         title, description, color,
         url_image, url_thumbnail, fields
-    ))
+    )
+    return await channel.send(embed=embed)
 
 
 def code_block(string: str, max_characters=2048):
@@ -120,8 +119,9 @@ def escape(message: str):
 
 def rmtree(top):
     """
-    Reimplementation of shutil.rmtree. The reason shutil.rmtree itself is not used,
-    is of a permission error in Windows while deleting the Kithare build folder.
+    Reimplementation of shutil.rmtree. The reason shutil.rmtree itself is not 
+    used, is of a permission error in Windows while deleting the 
+    Kithare build folder.
     """
     for root, dirs, files in os.walk(top, topdown=False):
         for name in files:
@@ -222,7 +222,7 @@ def run_kcr(*args, timeout=5):
     Run kcr command
     """
     if is_pulling:
-        return "ERROR: \n" + \
+        return "ERROR:\n" + \
             "Kithare command cannot run while Kithare is being built\n" + \
             "Please wait for a bit, and then try to re-run"
 

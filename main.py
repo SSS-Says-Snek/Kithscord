@@ -2,7 +2,7 @@ import os
 
 import discord
 
-from kithscord import admin_commands, common, user_commands, util
+from kithscord import commands, common, util
 
 
 @common.bot.event
@@ -27,10 +27,10 @@ async def on_message(msg: discord.Message):
         return
 
     if msg.content.startswith(common.PREFIX):
-        cmd = user_commands.UserCommand()
+        cmd = commands.UserCommand()
         for role in msg.author.roles:
             if role.id in common.ADMIN_ROLES:
-                cmd = admin_commands.AdminCommand()
+                cmd = commands.AdminCommand()
                 break
 
         response = await util.send_embed(
@@ -38,4 +38,5 @@ async def on_message(msg: discord.Message):
         )
         await cmd.handle_cmd(msg, response)
 
-common.bot.run(os.environ["TOKEN"])
+if __name__ == "__main__":
+    common.bot.run(os.environ["TOKEN"])

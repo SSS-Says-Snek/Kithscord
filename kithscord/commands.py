@@ -3,8 +3,8 @@ import sys
 
 import discord
 
-import kithscord.util
-from kithscord.user_commands import UserCommand
+from kithscord import util
+from kithscord.user_commands import UserCommand, ArgError
 
 
 class AdminCommand(UserCommand):
@@ -30,7 +30,7 @@ class AdminCommand(UserCommand):
         Implement kh!stop, for admins to stop the bot
         """
         self.check_args(0)
-        await kithscord.util.edit_embed(
+        await util.edit_embed(
             self.response,
             "Stopping bot...",
             "I gotta go now, but I will BRB"
@@ -45,6 +45,6 @@ class AdminCommand(UserCommand):
         if not self.args:
             self.args.append("main")
 
-        await kithscord.util.pull_kithare(
+        await util.pull_kithare(
             self.args[0], self.response, len(self.args) == 2
         )

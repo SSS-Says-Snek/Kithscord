@@ -1,10 +1,11 @@
 import os
+import platform
+import sys
 import traceback
 
 import discord
 
-import kithscord.common
-import kithscord.util
+from kithscord import common, util
 
 
 class ArgError(Exception):
@@ -43,12 +44,12 @@ class UserCommand:
         self.invoke_msg = invoke_msg
         self.response = resp_msg
 
-        cmd_str = invoke_msg.content[len(kithscord.common.PREFIX):].strip()
+        cmd_str = invoke_msg.content[len(common.PREFIX):].strip()
         self.args = cmd_str.split()
         cmd = self.args.pop(0)
         self.string = cmd_str[len(cmd):].strip()
 
-        kithscord.util.log(
+        util.log(
             f"Command invoked by {invoke_msg.author}: {cmd_str}"
         )
 
@@ -62,16 +63,28 @@ class UserCommand:
 
             elif isinstance(exc, KeyError):
                 title = "Unrecognized command!"
-                msg = ""
+                msg = f"Make sure that the command '{cmd}' exists, " +\
+                    "and you have the permission to use it"
 
             else:
                 error_tuple = (type(exc), exc, exc.__traceback__)
                 title = "An exception occured while handling the command!"
-                msg = kithscord.util.code_block(
-                    ''.join(traceback.format_exception(*error_tuple)).strip()
-                )
 
-            await kithscord.util.edit_embed(resp_msg, title, msg, 0xFF0000)
+                tbs = traceback.format_exception(*error_tuple)
+                # Pop out the first entry in the traceback, because that's
+                # this function call itself
+                tbs.pop(1)
+
+                elog = ''.join(tbs).replace(os.getcwd(), "Kithscord")
+                if platform.system() == "Windows":
+                    elog = elog.replace(
+                        os.path.dirname(sys.executable), "Python"
+                    )
+
+                util.log(f"Error: \n" + elog)
+                msg = util.code_block(elog)
+
+            await util.edit_embed(resp_msg, title, msg, 0xFF0000)
 
     def check_args(self, minarg, maxarg=None):
         """
@@ -93,11 +106,11 @@ class UserCommand:
         Implement kh!version, for check version
         """
         self.check_args(0)
-        await kithscord.util.edit_embed(
+        await util.edit_embed(
             self.response,
             "Version",
-            kithscord.util.run_kcr('-v')
-            + f"Kithscord Version {kithscord.common.VERSION}"
+            util.run_kcr('-v')
+            + f"Kithscord Version {common.VERSION}"
         )
 
     async def cmd_lex(self):
@@ -109,12 +122,10 @@ class UserCommand:
             f.write(code)
 
         try:
-            await kithscord.util.edit_embed(
+            await util.edit_embed(
                 self.response,
                 "Lexed Kithare output",
-                kithscord.util.code_block(
-                    kithscord.util.run_kcr("--lex", "tempfile")
-                )
+                util.code_block(util.run_kcr("--lex", "tempfile"))
             )
         finally:
             os.remove("tempfile")
