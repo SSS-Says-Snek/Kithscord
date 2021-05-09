@@ -129,3 +129,20 @@ class UserCommand:
             )
         finally:
             os.remove("tempfile")
+
+    async def cmd_parse(self):
+        """
+        Implement kh!lex, to lex kithare source
+        """
+        code = self.string.strip().strip('`')
+        with open("tempfile", "w") as f:
+            f.write(code)
+
+        try:
+            await util.edit_embed(
+                self.response,
+                "Parsed Kithare output",
+                util.code_block(util.run_kcr("--ast", "tempfile"))
+            )
+        finally:
+            os.remove("tempfile")
